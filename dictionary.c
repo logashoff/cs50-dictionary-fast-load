@@ -2,6 +2,26 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#ifdef WIN32
+#include <windows.h>
+double get_time()
+{
+    LARGE_INTEGER t, f;
+    QueryPerformanceCounter(&t);
+    QueryPerformanceFrequency(&f);
+    return (double) t.QuadPart / (double) f.QuadPart;
+}
+#else
+#include <sys/time.h>
+#include <sys/resource.h>
+double get_time()
+{
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return t.tv_sec + t.tv_usec * 1e-6;
+}
+#endif
+
 typedef struct Node 
 {
     bool is_word;
@@ -98,12 +118,22 @@ void walk(Node *node, int *counter)
 
 int main()
 {
-    // TODO: benchmark load
+    double start = get_time();
     load("large.txt");
+    double end = get_time();
+    printf("Time to Load: %.1f\n", end - start);
+    
     int count = 0;
-    // TODO: benchmark walk
+    start = get_time();
     walk(root, &count);
+    end = get_time();
     printf("Words Found in Trie: %d\n", count);
+    printf("Time to Walk: %.1f\n", end - start);
+    
+    start = get_time();
     free(pNodeBucket);
+    end = get_time();
+    printf("Time to Free: %.1f\n", end - start);
+    
     return 0;
 }
